@@ -60,13 +60,13 @@ jobs:
         run: |
           jq -cn \
             --arg job_result "${{ job.status }}" \
-            --arg workflow_name "${{ github.workflow }}-${{ matrix.release }}" \
+            --arg workflow_name "${{ github.workflow }}-${{ matrix.branch_name }}" \
             --arg run_id "${{ github.run_id }}" \
             --arg run_number "${{ github.run_number }}" \
             --arg start_time "${{ env.JOB_START_TIME }}" \
-            --arg github_event_schedule "${{ github.event_schedule }}" \
+            --arg github_event_schedule "${{ github.event.schedule }}" \
             --arg github_repo_name "${{ github.repository }}" \
-            --arg update_date "${{ env.UPDATE_DATE }}" \
+            --arg update_date "$(date -u +%Y-%m-%d)" \
             '{
               job_success: ($job_result == "success"),
               job_result: $job_result,
@@ -109,6 +109,13 @@ jobs:
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
 
+      - name: Upload outcome artifact
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ hashFiles('outcome') }}
+          path: outcome
+
   collect-outputs:
     runs-on: ubuntu-latest
     needs: [fetch-updates]
@@ -120,11 +127,16 @@ jobs:
 
       - id: collect
         run: |
-          outcomes="$(cat */outcome | jq -c --slurp .)"
-          echo "results_data=$outcomes" >> $GITHUB_OUTPUT
+          if [ -f */outcome ]; then
+            outcomes="$(cat */outcome | jq -c --slurp .)"
+            echo "results_data=$outcomes" >> $GITHUB_OUTPUT
+          else
+            echo "results_data=[]" >> $GITHUB_OUTPUT
+          fi
 
   post-to-turnstile:
     needs: [collect-outputs]
+    if: ${{ needs.collect-outputs.outputs.results_data != '[]' }}
     permissions:
       id-token: write
       contents: read
