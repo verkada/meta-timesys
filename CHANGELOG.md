@@ -1,5 +1,11 @@
 # Changelog
 
+## [v2.33.0+kirkstone] - 2026-06-15
+
+### Added
+
+* [feature] Add support for CycloneDX 1.7
+
 ## [v2.32.2+kirkstone] - 2026-04-17
 
 ### Fixed
