@@ -19,6 +19,7 @@ jobs:
           - dunfell
           - kirkstone
           - scarthgap
+          - wrynose
           - master
 
     steps:
