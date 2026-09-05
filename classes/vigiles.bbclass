@@ -92,6 +92,17 @@ def get_cpe_ids(cve_product, version):
         cpe_ids.append(cpe_id)
     return cpe_ids
 
+
+def get_generic_purl(name, version):
+    """Return a package URL for a Yocto package without a package ecosystem."""
+    from urllib.parse import quote
+
+    return "pkg:generic/%s@%s" % (
+        quote(str(name), safe=""),
+        quote(str(version), safe=""),
+    )
+
+
 python do_vigiles_pkg() {
     pn = d.getVar('PN')
     bpn = d.getVar('BPN')
@@ -133,6 +144,7 @@ python do_vigiles_pkg() {
     manifest = tsmeta_read_dictname_vars(d, 'src', pn, src_vars)
     manifest['name'] = pn_dict['pn']
     manifest['version'] = pn_dict['pv']
+    manifest['purl'] = get_generic_purl(manifest['name'], manifest['version'])
     # Add cpe_id for each package in manifest to support spdx format
     manifest['cpe_id'] = manifest.get('pkg_cpe_id') or get_cpe_ids(manifest['cve_product'], manifest['cve_version'])
     manifest.pop('pkg_cpe_id')
